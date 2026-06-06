@@ -1,18 +1,17 @@
-
 # Lab5 – Reverse Engineering: OWASP UnCrackable Level 2
 
-This lab focuses on the **static analysis** of the `UnCrackable-Level2.apk`, an intentionally vulnerable application from the OWASP MASTG (Mobile Application Security Testing Guide).
+This lab focuses on the static analysis of the `UnCrackable-Level2.apk`, an intentionally vulnerable application from the OWASP MASTG (Mobile Application Security Testing Guide).
 
 Unlike Level 1, this application moves the core validation logic into a native library (`libfoo.so`), requiring both Java and native code analysis to uncover the secret.
 
 ---
 
-# 🎯 Learning Objectives
+# Learning Objectives
 
-- Understand how **JNI (Java Native Interface)** works in Android applications
-- Decompile and analyze Java bytecode using **JADX**
+- Understand how JNI (Java Native Interface) works in Android applications
+- Decompile and analyze Java bytecode using JADX
 - Extract native libraries (`.so`) from an APK
-- Perform static analysis on native binaries using **Ghidra**
+- Perform static analysis on native binaries using Ghidra
 - Decode obfuscated hexadecimal strings
 - Identify anti-debugging and anti-root protections
 - Reconstruct the secret validation flow
@@ -20,7 +19,7 @@ Unlike Level 1, this application moves the core validation logic into a native l
 
 ---
 
-# 📦 Prerequisites
+# Prerequisites
 
 | Tool | Purpose | Download |
 |------|---------|-----------|
@@ -33,7 +32,7 @@ Unlike Level 1, this application moves the core validation logic into a native l
 
 ---
 
-> ⚠️ **Warning**
+> Warning
 >
 > This APK is intentionally vulnerable and contains anti-debugging and anti-root protections.
 >
@@ -47,7 +46,7 @@ Unlike Level 1, this application moves the core validation logic into a native l
 
 ---
 
-# 🧪 Step 1 – Install the Application
+# Step 1 – Install the Application
 
 ## Start the Emulator
 
@@ -81,7 +80,7 @@ Success
 
 ---
 
-# 🔍 Step 2 – Static Analysis with JADX
+# Step 2 – Static Analysis with JADX
 
 ## Launch JADX
 
@@ -91,11 +90,11 @@ jadx-gui UnCrackable-Level2.apk
 
 ---
 
-## 2.1 Analyze `AndroidManifest.xml`
+## 2.1 Analyze AndroidManifest.xml
 
-![Manifest Analysis](images/lab5-1.png)
+![Manifest Analysis](lab5-1.png)
 
-**Figure 1:** AndroidManifest.xml showing package name, main activity, and SDK versions.
+Figure 1: AndroidManifest.xml showing package name, main activity, and SDK versions.
 
 ### Key Observations
 
@@ -117,17 +116,17 @@ jadx-gui UnCrackable-Level2.apk
 
 ---
 
-![Full Manifest](images/lab5-2.png)
+![Full Manifest](lab5-2.png)
 
-**Figure 2:** Full manifest confirming a single activity and no exported components.
+Figure 2: Full manifest confirming a single activity and no exported components.
 
 ---
 
-## 2.2 Analyze `MainActivity`
+## 2.2 Analyze MainActivity
 
-![MainActivity Decompiled](images/lab5-03.png)
+![MainActivity Decompiled](lab5-03.png)
 
-**Figure 3:** Decompiled `MainActivity` showing validation logic.
+Figure 3: Decompiled `MainActivity` showing validation logic.
 
 ### Native Library Loading
 
@@ -168,9 +167,9 @@ public void verify(View view) {
 
 ---
 
-## 2.3 Anti-Debug & Anti-Root Protections
+## 2.3 Anti-Debug and Anti-Root Protections
 
-The application implements multiple protections:
+The application implements multiple protections.
 
 ### Root Detection
 
@@ -179,7 +178,7 @@ Methods:
 - `b.b()`
 - `b.c()`
 
-These check:
+These methods check:
 - `su` binary
 - Root-related files
 - Dangerous system properties
@@ -216,11 +215,11 @@ Every 100ms
 
 ---
 
-## 2.4 Analyze `CodeCheck`
+## 2.4 Analyze CodeCheck
 
-![CodeCheck Class](images/lab5-4.png)
+![CodeCheck Class](lab5-4.png)
 
-**Figure 4:** `CodeCheck` class containing the native method declaration.
+Figure 4: `CodeCheck` class containing the native method declaration.
 
 ```java
 public class CodeCheck {
@@ -249,11 +248,11 @@ libfoo.so
 
 ---
 
-# 📦 Step 3 – Extract the Native Library
+# Step 3 – Extract the Native Library
 
 An APK is simply a ZIP archive.
 
-Using **7-Zip**, open the APK and navigate to:
+Using 7-Zip, open the APK and navigate to:
 
 ```text
 /lib/x86/libfoo.so
@@ -283,23 +282,21 @@ libfoo.so
 
 ---
 
-# 🧠 Step 4 – Native Analysis with Ghidra
+# Step 4 – Native Analysis with Ghidra
 
----
-
-## 4.1 Import `libfoo.so`
+## 4.1 Import libfoo.so
 
 1. Create a new Ghidra project
 2. Import `libfoo.so`
 3. Run automatic analysis
 
-![Ghidra Project](images/lab5-5.png)
+![Ghidra Project](lab5-5.png)
 
-**Figure 5:** Ghidra project with `libfoo.so` loaded.
+Figure 5: Ghidra project with `libfoo.so` loaded.
 
 ---
 
-## 4.2 Locate JNI Function
+## 4.2 Locate the JNI Function
 
 Navigate to:
 
@@ -321,15 +318,15 @@ CodeCheck.bar()
 
 ---
 
-![Disassembly](images/lab5-6.png)
+![Disassembly](lab5-6.png)
 
-**Figure 6:** Ghidra disassembly view.
+Figure 6: Ghidra disassembly view.
 
 ---
 
-![Decompiler Output](images/lab5-7.png)
+![Decompiler Output](lab5-7.png)
 
-**Figure 7:** Decompiled function showing hardcoded hexadecimal chunks.
+Figure 7: Decompiled function showing hardcoded hexadecimal chunks.
 
 ---
 
@@ -387,11 +384,11 @@ Expected length:
 
 The hexadecimal values stored in local variables form the secret.
 
-Because the system architecture is **little-endian**, bytes must be reversed.
+Because the system architecture is little-endian, bytes must be reversed.
 
 ---
 
-# 🧩 Step 5 – Decode the Secret
+# Step 5 – Decode the Secret
 
 Example conversion:
 
@@ -425,7 +422,7 @@ This is the secret expected by the application.
 
 ---
 
-# ✅ Step 6 – Dynamic Validation
+# Step 6 – Dynamic Validation
 
 1. Launch the application
 2. Enter:
@@ -434,13 +431,13 @@ This is the secret expected by the application.
 Thanks for all the fish
 ```
 
-3. Click **VERIFY**
+3. Click VERIFY
 
 ---
 
-![Success Dialog](images/lab5-8.png)
+![Success Dialog](lab5-8.png)
 
-**Figure 8:** Success message confirming the correct secret.
+Figure 8: Success message confirming the correct secret.
 
 Expected result:
 
@@ -450,7 +447,7 @@ Success! This is the correct secret.
 
 ---
 
-# 📊 Complete Verification Flow
+# Complete Verification Flow
 
 ```text
 User enters text in EditText
@@ -476,7 +473,7 @@ Return 1 (success) or 0 (failure)
 
 ---
 
-# 📋 Vulnerability Summary
+# Vulnerability Summary
 
 | Vulnerability | Location | Severity | Description |
 |---|---|---|---|
@@ -486,7 +483,7 @@ Return 1 (success) or 0 (failure)
 
 ---
 
-# ✅ Validation Checklist
+# Validation Checklist
 
 - [x] APK installed successfully via ADB
 - [x] AndroidManifest.xml analyzed
@@ -500,7 +497,7 @@ Return 1 (success) or 0 (failure)
 
 ---
 
-# 🧹 Cleanup
+# Cleanup
 
 Uninstall the application:
 
@@ -517,4 +514,3 @@ Close:
 - Ghidra
 - JADX
 
----
